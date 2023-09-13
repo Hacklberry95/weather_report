@@ -1,5 +1,5 @@
 async function getForecast() {
-  let url = "http://localhost:8080/forecast"
+  let url = "http://localhost:8080/forecast";
   try {
     let response = await fetch(url);
     return await response.json();
@@ -9,7 +9,7 @@ async function getForecast() {
 }
 
 async function getData() {
-  let url = "http://localhost:8080/data"
+  let url = "http://localhost:8080/data";
   try {
     let response = await fetch(url);
     return await response.json();
@@ -17,36 +17,50 @@ async function getData() {
     console.log(error);
   }
 }
-function generateWeatherHtml(weather) {
-  let date = new Date(weather.data.getTime());
-  let hr = date.getUTCHours() + ":" + addZeroBefore(date.getUTCMinutes());
-  let html = `<div class="col-md-2 card">
+
+async function generateWeatherHtml(weatherList) {
+  let html = "";
+
+  let weather = await getData();
+
+  for (weather of weatherList) {
+    let date = new Date(weather.time);
+    let hr = date.getUTCHours() + ":" + addZeroBefore(date.getUTCMinutes());
+
+    html += `<div class="col-md-2 card">
               <div>
-                Place: ${weather.data.getPlace()} <br>
-                Type: ${weather.data.getType()} <br>
-                Unit: ${weather.data.getUnit()} <br>
-                Value: ${weather.getValue()} <br>                                                   
+                Place: ${weather.place} <br>
+                Type: ${weather.type} <br>`;
+
+    if (weather.direction !== undefined) {
+      html += `Direction: ${weather.direction} <br>`;
+    }
+
+    if (weather.precipitation_type !== undefined) {
+      html += `Precipitation Type: ${weather.precipitation_type} <br>`;
+    }
+
+    html += `From: ${weather.from}
+              To: ${weather.to} 
+              Unit: ${weather.unit} <br>
                 Time: ${hr}
               </div>
               <br>
             </div>`;
+  }
   return html;
 }
 
 function addZeroBefore(n) {
-  return (n < 10 ? '0' : '') + n;
-}
-
-async function renderWeatherData(weatherList, containerSelector) {
-  let htmlList = await Promise.all(weatherList.map(weather => generateWeatherHtml(weather)));
-  let html = htmlList.join('');
-  document.querySelector(containerSelector).innerHTML = html;
+  return (n < 10 ? "0" : "") + n;
 }
 
 function filterByCityAndType(data, city, type = null) {
-  let filteredData = data.filter(w => w.place.toLowerCase() == city.toLowerCase());
+  let filteredData = data.filter(
+    (w) => w.place.toLowerCase() == city.toLowerCase()
+  );
   if (type) {
-    filteredData = filteredData.filter(w => w.type == type);
+    filteredData = filteredData.filter((w) => w.type == type);
   }
   return filteredData;
 }
@@ -54,202 +68,189 @@ function filterByCityAndType(data, city, type = null) {
 function filterByDate(data, daysAgo = 1) {
   let targetDate = new Date();
   targetDate.setDate(targetDate.getDate() - daysAgo);
-  return data.filter(w => new Date(w.time).getDate() == targetDate.getDate());
-}
-
-async function getCityWeather(city) {
-  let cityWeather = await getData();
-  let filteredWeather = filterByCityAndType(cityWeather, city);
-  renderWeatherData(filteredWeather, ".row");
+  return data.filter((w) => new Date(w.time).getDate() == targetDate.getDate());
 }
 
 async function renderForecast(city) {
   let weatherForecasts = await getForecast();
   let filteredForecasts = filterByCityAndType(weatherForecasts, city);
-  renderWeatherData(filteredForecasts, ".data");
+  let html = await generateWeatherHtml(filteredForecasts);
+  document.querySelector(".data").innerHTML = html;
 }
+
+/**
+ * the getMinMaxTemp() method fetches weather data and filters temp data for the specified city and by the previous day. We then
+ * find the min and max temps using the spread operator and Math.min.
+ * @param city - The city name we wish to view the temps for.
+ */
 
 async function getMinMaxTemp(city) {
-  let weatherData = await getData();
-  let tempData = filterByCityAndType(weatherData, city, "temperature");
-  let previousDayData = filterByDate(tempData);
+  try {
+    let weatherData = await getData();
+    let tempData = filterByCityAndType(weatherData, city, "temperature");
+    let previousDayData = filterByDate(tempData);
 
-  let minTemp = previousDayData.map(element => element.getValue()).reduce((a, b) => Math.min(a, b));
-  let maxTemp = previousDayData.map(element => element.getValue()).reduce((a, b) => Math.max(a, b));
+    if (previousDayData.length > 0) {
+      let minTemp = Math.min(
+        ...previousDayData.map((element) => element.value)
+      );
+      let maxTemp = Math.max(
+        ...previousDayData.map((element) => element.value)
+      );
 
-  // ... continue with other logic, using helper functions where necessary.
+      let minMaxTempHtml = `
+        <div class="col-md-2 card">
+          <div>
+            Minimum Temperature: ${city} ${minTemp} &deg;C <br>
+            Maximum Temperature: ${city} ${maxTemp} &deg;C
+          </div>
+        </div>
+       `;
+
+      // Append the HTML to the ".minMaxTemp" container
+      document.querySelector(".minMaxTemp").innerHTML = minMaxTempHtml;
+    } else {
+      console.log("No temperature data available for the specified city.");
+    }
+  } catch (error) {
+    console.error("Error getting min/max temperature:", error);
+  }
 }
 
-async function latestData() {
-  let weather = await getData();
-  renderWeatherData(weather, ".row");
+async function calculateTotalPrecipitation(city) {
+  try {
+    let weatherData = await getData();
+    let precipitationData = filterByCityAndType(
+      weatherData,
+      city,
+      "precipitation"
+    );
+    let previousDayData = filterByDate(precipitationData);
+
+    if (previousDayData.length > 0) {
+      // Calculate the total precipitation using reduce
+      let totalPrecipitation = previousDayData.reduce((total, element) => {
+        return total + element.value;
+      }, 0);
+
+      let totalPrecipitationHtml = `
+        <div class="col-md-2 card">
+          <div>
+            Total Precipitation: ${city} ${totalPrecipitation} mm
+          </div>
+        </div>
+      `;
+      document.querySelector(".totalPrecipitation").innerHTML =
+        totalPrecipitationHtml;
+    } else {
+      console.log("No precipitation data available for the specified city.");
+    }
+  } catch (error) {
+    console.error("Error calculating total precipitation:", error);
+  }
 }
+
+async function calculateAverageWindSpeed(city) {
+  try {
+    let weatherData = await getData();
+    let windSpeedData = filterByCityAndType(weatherData, city, "wind speed");
+    let previousDayData = filterByDate(windSpeedData);
+
+    if (previousDayData.length > 0) {
+      let totalWindSpeed = previousDayData.reduce((total, element) => {
+        return total + element.value;
+      }, 0);
+      let averageWindSpeed = totalWindSpeed / previousDayData.length;
+
+      let averageWindSpeedHtml = `
+        <div class="col-md-2 card">
+          <div>
+            Average Wind Speed: ${city} ${averageWindSpeed} m/s
+          </div>
+        </div>
+      `;
+      document.querySelector(".averageWindSpeed").innerHTML =
+        averageWindSpeedHtml;
+    } else {
+      console.log("No wind speed data available for the specified city.");
+    }
+  } catch (error) {
+    console.error("Error calculating average wind speed:", error);
+  }
+}
+
+/**
+ * In the displayLatestMeasurements() method, we are creating an object that stores the latest measuerements of each type. We then
+ * check if the weather data matches the specified city, before displaying the data in html
+ * @param city - The city we want to get the latest measurements for.
+ */
+
+
+async function displayLatestMeasurements(city) {
+  try {
+    let weatherData = await getData();
+
+    let latestMeasurements = {};
+
+    weatherData.forEach((weather) => {
+      const type = weather.type;
+     
+      if (weather.place.toLowerCase() === city.toLowerCase()) {
+        if (
+          !(type in latestMeasurements) ||
+          new Date(weather.time) > new Date(latestMeasurements[type].time)
+        ) {
+          latestMeasurements[type] = weather;
+        }
+      }
+    });
+
+    let latestMeasurementsHtml = "";
+    for (const type in latestMeasurements) {
+      const measurement = latestMeasurements[type];
+      let date = new Date(measurement.time);
+      let hr = date.getUTCHours() + ":" + addZeroBefore(date.getUTCMinutes());
+
+      latestMeasurementsHtml += `
+        <div class="col-md-2 card">
+          <div>
+            Place: ${measurement.place} <br>
+            Type: ${measurement.type} <br>
+            Value: ${measurement.value} <br>
+            Unit: ${measurement.unit} <br>
+            Time: ${hr} <br>
+          </div>
+        </div>
+      `;
+    }
+
+    document.querySelector(".latestMeasurements").innerHTML =
+      latestMeasurementsHtml;
+  } catch (error) {
+    console.error("Error displaying latest measurements:", error);
+  }
+}
+
+
+
+
+
+// async function renderWeatherData(weatherList, containerSelector) {
+//   try {
+//     let htmlList = await Promise.all(
+//       weatherList.map((weather) => generateWeatherHtml(weather))
+//     );
+//     let html = htmlList.join("");
+//     document.querySelector(containerSelector).innerHTML = html;
+//   } catch (error) {
+//     console.error("Error rendering weather data:", error);
+//   }
+// }
+
+
 
 // async function getCityWeather(city) {
-//     const cityWeather = await getData();
-//     const cityData = cityWeather
-//         .filter(data => data.place.toLowerCase() === city.toLowerCase())
-//         .map(weatherData);
-
-//     const html = cityData.map(cityWeather => {
-//         const date = new Date(cityWeather.data.getTime());
-//         const hr = `${date.getUTCHours()}:${addZeroBefore(date.getUTCMinutes())}`;
-//         const direction = cityWeather.getDirection() !== undefined ? `Direction: ${cityWeather.getDirection()} <br>` : '';
-//         const precipitationType = cityWeather.getPrecipitationType() !== undefined ? `Precipitation Type: ${cityWeather.getPrecipitationType()} <br>` : '';
-
-//         return `
-//         <div class="col-md-2 card">
-//           <div>
-//             Place: ${cityWeather.data.getPlace()} <br>
-//             Type: ${cityWeather.data.getType()} <br>
-//             ${direction}
-//             ${precipitationType}
-//             Value: ${cityWeather.getValue()} ${cityWeather.data.getUnit()} <br>
-//             Time: ${date} <br>
-//           </div>
-//         </div>
-//       `;
-//     }).join('');
-
-//     document.querySelector(".row").innerHTML = html;
+//   let cityWeather = await getData();
+//   let filteredWeather = filterByCityAndType(cityWeather, city);
+//   renderWeatherData(filteredWeather, ".row");
 // }
-
-// async function renderForecast(city) {
-//     getMinMaxTemp(city);
-//     const weatherForecasts = await getForecast();
-
-//     const html = weatherForecasts
-//         .filter(fc => fc.place.toLowerCase() === city.toLowerCase())
-//         .map(weather => {
-//             const date = new Date(weather.data.getTime());
-//             const hr = `${date.getUTCHours()}:${addZeroBefore(date.getUTCMinutes())}`;
-//             const listHtml = getList(weather.getPrecipitationTypes()) + getList(weather.getDirections());
-
-//             return `
-//           <div class="col-md-2 card">
-//             <div>
-//               Place: ${weather.data.getPlace()} <br>
-//               Type: ${weather.data.getType()} <br>
-//               ${listHtml}
-//               Unit: ${weather.data.getUnit()} <br>
-//               From: ${weather.getFrom()} <br>
-//               To: ${weather.getTo()} <br>
-//               Time: ${hr} <br>
-//             </div>
-//           </div>
-//         `;
-//         }).join('');
-
-//     document.querySelector(".data").innerHTML = html;
-// }
-
-// async function getMinMaxTemp(city) {
-//     const data = await getData();
-//     const previousDay = new Date();
-//     previousDay.setDate(previousDay.getDate() - 1);
-
-//     const filterByCity = w => w.place.toLowerCase() === city.toLowerCase();
-//     const filterByType = type => w => w.type === type;
-//     const filterByDate = date => w => {
-//         const wDate = new Date(w.time);
-//         return wDate.getDate() === date.getDate();
-//     };
-
-//     const temperatureData = data
-//         .filter(filterByCity)
-//         .filter(filterByType("temperature"))
-//         .filter(filterByDate(previousDay))
-//         .map(weatherData);
-
-//     const minTemp = Math.min(...temperatureData.map(element => element.getValue()));
-//     const maxTemp = Math.max(...temperatureData.map(element => element.getValue()));
-//     const averageWindSpeed = calculateAverageWindSpeed(data, city, previousDay);
-//     const totalPrecipitation = calculateTotalPrecipitation(data, city, previousDay);
-
-//     const html = `
-//       <div class="col-md-4 card">
-//         Minimum temperature: ${minTemp} <br>
-//         Maximum temperature: ${maxTemp} <br>
-//       </div>
-//       <div class="col-md-4 card">
-//         Average Wind Speed: ${averageWindSpeed.toFixed(1)} <br>
-//       </div>
-//       <div class="col-md-4 card">
-//         Total Precipitation: ${totalPrecipitation.toFixed(1)} <br>
-//       </div>
-//     `;
-
-//     document.querySelector(".minMaxTemp").innerHTML = html;
-// }
-
-// function calculateAverageWindSpeed(data, city, date) {
-//     const windData = data
-//         .filter(w => w.place.toLowerCase() === city.toLowerCase())
-//         .filter(w => w.type === "wind speed")
-//         .filter(w => {
-//             const wDate = new Date(w.time);
-//             return wDate.getDate() === date.getDate();
-//         })
-//         .map(weatherData);
-
-//     const totalWindSpeed = windData.reduce((sum, element) => sum + element.getValue(), 0);
-//     return totalWindSpeed / windData.length;
-// }
-
-// function calculateTotalPrecipitation(data, city, date) {
-//     const precipitationData = data
-//         .filter(w => w.place.toLowerCase() === city.toLowerCase())
-//         .filter(w => w.type === "precipitation")
-//         .filter(w => {
-//             const wDate = new Date(w.time);
-//             return wDate.getDate() === date.getDate();
-//         })
-//         .map(weatherData);
-
-//     return precipitationData.reduce((sum, element) => sum + element.getValue(), 0);
-// }
-
-// async function latestData() {
-//     const weatherData = await getData();
-//     const latestDate = new Date(
-//         Math.max(...weatherData.map(data => new Date(data.data.getTime()).getTime()))
-//     );
-
-//     const latestDataList = weatherData
-//         .filter(data => new Date(data.data.getTime()).getTime() === latestDate.getTime())
-//         .map(weatherData);
-
-//     const html = latestDataList.map(weather => {
-//         const date = new Date(weather.data.getTime());
-//         const hr = `${date.getUTCHours()}:${addZeroBefore(date.getUTCMinutes())}`;
-
-//         return `
-//         <div class="col-md-2 card">
-//           <div>
-//             Place: ${weather.data.getPlace()} <br>
-//             Type: ${weather.data.getType()} <br>
-//             Unit: ${weather.data.getUnit()} <br>
-//             Value: ${weather.getValue()} <br>
-//             Time: ${hr} <br>
-//           </div>
-//         </div>
-//       `;
-//     }).join('');
-
-//     document.querySelector(".row").innerHTML = html;
-// }
-
-// function addZeroBefore(n) {
-//     return (n < 10 ? '0' : '') + n;
-// }
-
-// function getList(list) {
-//     return list.length
-//         ? `
-//         <ul>
-//           ${list.map(i => `<li>${i}</li>`).join('')}
-//         </ul>
-//       `
-//         : '';
-// }
-

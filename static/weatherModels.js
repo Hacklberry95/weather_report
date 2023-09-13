@@ -20,5 +20,5 @@ function weatherData({ data, value, type, unit, time, place, direction, precipit
     const getValue = () => value
     const getDirection = () => direction
     const getPrecipitationType = () => precipitation_type
-    return { getValue, data, getDirection, getPrecipitationType }
+    return { data, getValue, getDirection, getPrecipitationType }
 }

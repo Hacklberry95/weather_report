@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Information Form</title>
+</head>
+<body>
+
+<form id="weatherForm">
+    <label for="place">Location:</label>
+    <input type="text" id="place" name="place"><br><br>
+
+    <label for="value">Value :</label>
+    <input type="number" id="value" name="value"><br><br>
+
+    <select name="valueType" id="valueType">
+        <option value="precipitation">Precipitation</option>
+        <option value="windSpeed">Wind Speed</option>
+        <option value="cloudCoverage">Cloud Coverage</option>
+        <option value="temperature">Temperature</option>
+      </select>
+
+
+    <label for="unit">Unit:</label>
+    <input type="string" id="unit" name="unit"><br><br>
+
+    <label for="time">Time:</label>
+    <input type="date" id="time" name="time"><br><br>
+
+    <button type="button" onclick="addData()">ADD</button>
+    <button type="reset" onclick="clearData()">CLEAR</button>
+</form>
+
+<script src="form.js"></script>
+
+</body>
+</html>
