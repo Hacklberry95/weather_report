@@ -51,6 +51,8 @@ async function generateWeatherHtml(weatherList) {
   return html;
 }
 
+
+
 function addZeroBefore(n) {
   return (n < 10 ? "0" : "") + n;
 }
@@ -78,6 +80,12 @@ async function renderForecast(city) {
   document.querySelector(".data").innerHTML = html;
 }
 
+document.getElementById("myCityDropdown").onchange = function () {
+  // Gets the selected option's value
+  var selectedValue = this.value;
+  renderForecast(selectedValue);
+};
+
 /**
  * the getMinMaxTemp() method fetches weather data and filters temp data for the specified city and by the previous day. We then
  * find the min and max temps using the spread operator and Math.min.
@@ -98,6 +106,8 @@ async function getMinMaxTemp(city) {
         ...previousDayData.map((element) => element.value)
       );
 
+
+
       let minMaxTempHtml = `
         <div class="col-md-2 card">
           <div>
@@ -108,7 +118,9 @@ async function getMinMaxTemp(city) {
        `;
 
       // Append the HTML to the ".minMaxTemp" container
-      document.querySelector(".minMaxTemp").innerHTML = minMaxTempHtml;
+
+      document.querySelector(".data").innerHTML = minMaxTempHtml;
+
     } else {
       console.log("No temperature data available for the specified city.");
     }
@@ -140,7 +152,7 @@ async function calculateTotalPrecipitation(city) {
           </div>
         </div>
       `;
-      document.querySelector(".totalPrecipitation").innerHTML =
+      document.querySelector(".data").innerHTML =
         totalPrecipitationHtml;
     } else {
       console.log("No precipitation data available for the specified city.");
@@ -169,7 +181,7 @@ async function calculateAverageWindSpeed(city) {
           </div>
         </div>
       `;
-      document.querySelector(".averageWindSpeed").innerHTML =
+      document.querySelector(".data").innerHTML =
         averageWindSpeedHtml;
     } else {
       console.log("No wind speed data available for the specified city.");
@@ -194,7 +206,7 @@ async function displayLatestMeasurements(city) {
 
     weatherData.forEach((weather) => {
       const type = weather.type;
-     
+
       if (weather.place.toLowerCase() === city.toLowerCase()) {
         if (
           !(type in latestMeasurements) ||
@@ -230,27 +242,3 @@ async function displayLatestMeasurements(city) {
     console.error("Error displaying latest measurements:", error);
   }
 }
-
-
-
-
-
-// async function renderWeatherData(weatherList, containerSelector) {
-//   try {
-//     let htmlList = await Promise.all(
-//       weatherList.map((weather) => generateWeatherHtml(weather))
-//     );
-//     let html = htmlList.join("");
-//     document.querySelector(containerSelector).innerHTML = html;
-//   } catch (error) {
-//     console.error("Error rendering weather data:", error);
-//   }
-// }
-
-
-
-// async function getCityWeather(city) {
-//   let cityWeather = await getData();
-//   let filteredWeather = filterByCityAndType(cityWeather, city);
-//   renderWeatherData(filteredWeather, ".row");
-// }

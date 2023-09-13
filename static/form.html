@@ -1,38 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Weather Information Form</title>
 </head>
+
 <body>
 
-<form id="weatherForm">
-    <label for="place">Location:</label>
-    <input type="text" id="place" name="place"><br><br>
+    <script id="replace_with_navbar" src="nav.js"></script>
+    <form id="weatherForm">
+        <label for="place">Location:</label>
+        <input type="text" id="place" name="place"><br><br>
 
-    <label for="value">Value :</label>
-    <input type="number" id="value" name="value"><br><br>
+        <label for="value">Value :</label>
+        <input type="number" id="value" name="value"><br><br>
 
-    <select name="valueType" id="valueType">
-        <option value="precipitation">Precipitation</option>
-        <option value="windSpeed">Wind Speed</option>
-        <option value="cloudCoverage">Cloud Coverage</option>
-        <option value="temperature">Temperature</option>
-      </select>
+        <select name="valueType" id="valueType">
+            <option value="precipitation">Precipitation</option>
+            <option value="windSpeed">Wind Speed</option>
+            <option value="cloudCoverage">Cloud Coverage</option>
+            <option value="temperature">Temperature</option>
+        </select>
 
 
-    <label for="unit">Unit:</label>
-    <input type="string" id="unit" name="unit"><br><br>
+        <label for="unit">Unit:</label>
+        <input type="string" id="unit" name="unit"><br><br>
 
-    <label for="time">Time:</label>
-    <input type="date" id="time" name="time"><br><br>
+        <label for="time">Time:</label>
+        <input type="date" id="time" name="time"><br><br>
 
-    <button type="button" onclick="addData()">ADD</button>
-    <button type="reset" onclick="clearData()">CLEAR</button>
-</form>
+        <button type="button" onclick="addData()">ADD</button>
+        <button type="reset" onclick="clearData()">CLEAR</button>
+    </form>
 
-<script src="form.js"></script>
+    <script src="form.js"></script>
 
 </body>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-iYQeCzEYFbKjA/T2uDLTpkwGzCiq6soy8tYaI1GyVh/UjpbCx/TYkiZhlZB6+fzT" crossorigin="anonymous">
+<!-- JavaScript Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-u1OknCvxWvY5kfmNBILK2hRnQC3Pr17a+RTT6rIHI7NnikvbZlHgTPOOmMi466C8"
+    crossorigin="anonymous"></script>
+<link href="style.css">
+
 </html>
