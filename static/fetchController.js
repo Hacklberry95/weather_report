@@ -83,7 +83,9 @@ async function renderForecast(city) {
 document.getElementById("myCityDropdown").onchange = function () {
   // Gets the selected option's value
   var selectedValue = this.value;
-  renderForecast(selectedValue);
+  if (selectedValue !== null) {
+    renderForecast(selectedValue);
+  }
 };
 
 /**
